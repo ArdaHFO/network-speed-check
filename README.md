@@ -1,4 +1,6 @@
-<h1 align="center">Speedtest</h1>
+This project explores internet speed by timing file transfers and connection requests.
+
+<h1 align="center">Network Speed Lab</h1>
 
 <p align="center"><strong>Explore network measurements from both sides of the browser.</strong></p>
 <p align="center">A Python and Flask experiment combining browser request timing with server-side transfer and speedtest-cli measurements.</p>
@@ -14,7 +16,7 @@
 
 This project explores two approaches to connection testing. The browser page times HTTP requests, while a separate Flask route combines file transfers, speedtest-cli and a system ping command. Reading them together shows why the location of the measurement, the transferred byte count and the timing method matter.
 
-**This is an experimental prototype.** Several measurement and upload paths need correction before their output can be treated as an accurate speed result. The interface is primarily English, with some Turkish upload responses. Documentation is available in English and Turkish.
+**This is an experimental prototype.** Transfer paths and arithmetic have received static fixes, but end-to-end behavior and measurement accuracy have not been verified. The interface is primarily English. Documentation is available in English and Turkish.
 
 ## Run locally
 
@@ -28,8 +30,8 @@ This project explores two approaches to connection testing. The browser page tim
 Clone the source and create a fresh environment.
 
 ```text
-git clone https://github.com/ArdaHFO/speedtest.git
-cd speedtest
+git clone https://github.com/ArdaHFO/network-speed-lab.git
+cd network-speed-lab
 python -m venv .venv
 ```
 
@@ -44,8 +46,8 @@ Open [localhost:8000](http://127.0.0.1:8000). These commands start the UI withou
 
 ## Inside the project
 
-- **Browser download timing.** A button requests a remote image and displays a calculated rate.
-- **File upload experiment.** A file picker sends a multipart request to the Flask server.
+- **Browser download timing.** A button requests the bundled transfer fixture and calculates a rate from the received byte count.
+- **File upload experiment.** A file picker sends a multipart request, and the server confirms the received byte count without saving an application file.
 - **HTTP round-trip timing.** The ping button measures the time taken by a request to `/ping`.
 - **Server-side comparison.** `POST /measure` combines a fixed-size download, an upload to an external echo service, speedtest-cli results and a system ping.
 - **Separate result view.** The server renders its measurements into a Jinja template with server-location details.
@@ -56,7 +58,8 @@ Open [localhost:8000](http://127.0.0.1:8000). These commands start the UI withou
 | --- | --- | --- |
 | `GET /` | Displays the browser interface | Browser |
 | `GET /ping` | Returns `Pong` | HTTP request from browser to Flask |
-| `POST /upload` | Saves a submitted file under `uploads/` | Browser to Flask |
+| `GET /download` | Serves the bundled `20MB.png` without caching | Flask to browser |
+| `POST /upload` | Counts received bytes without saving an application file | Browser to Flask |
 | `POST /measure` | Runs transfers, speedtest-cli and system ping | The machine running Flask |
 | `GET /views/` | Alternate entry to the same interface | Browser |
 
@@ -64,16 +67,16 @@ A remote Flask deployment measures a different network path from a local one. Th
 
 ## Validation and current limits
 
-The Python source, templates, routes and dependency declarations were reviewed for this documentation. No network measurements or runtime integration tests were performed.
+The source has been reviewed statically. No application execution, automated tests, network measurements or benchmarks were performed for these changes.
 
-- The browser download uses a fixed remote IP address and an assumed 1 MiB payload, while the requested filename suggests a different size. Availability, TLS and cross-origin access are not verified.
-- Browser rate calculations label byte-based values as Mbps without the required conversion to bits. The server's custom calculations also need review. Displayed numbers should not be used as benchmark results.
-- The upload directory is not included. The upload handler saves the supplied filename without a production upload policy, so keep this prototype local and use non-sensitive test files.
-- The custom server upload calculation counts the response body rather than the transmitted file bytes.
-- The server measurement form has its submit control commented out. Its system-ping handling also depends on operating-system behavior.
-- External requests lack explicit timeouts and robust status handling. Running `POST /measure` generates real network traffic.
+- Browser timing now uses successful HTTP responses, actual payload bytes, elapsed seconds and decimal Mbps. Download and ping responses disable caching. These corrections have not been exercised in a browser.
+- Browser downloads use the bundled `20MB.png`, so the measured path is between the browser and this Flask server. A local preview does not measure ISP bandwidth.
+- Upload requests are limited to 32 MiB including multipart overhead. The handler consumes file bytes for counting and does not retain a saved application file.
+- The server-side upload rate includes request and response time. HTTP handling, network conditions and remote services influence the observed rate.
+- The optional server measurement route still uses external transfer services and speedtest-cli. Its form submit control is commented out, and no current provider availability is claimed.
+- System ping output remains operating-system dependent. Commands and custom HTTP requests have bounded waits, but the complete external-service flow has not been verified.
 
-For a corrected implementation, define the network path first, check HTTP success, use the actual payload size, and calculate decimal Mbps as `bytes × 8 / seconds / 1,000,000`. Report repeatability and caching behavior alongside any result.
+Rates are calculated as `bytes × 8 / seconds / 1,000,000`. Meaningful benchmark reporting still requires controlled payloads, repeat runs and a clear account of the network path.
 
 ## Project map
 
@@ -92,9 +95,8 @@ Scripts/               Committed historical Python environment
 
 Keep browser measurements and server measurements clearly identified in changes. For a bug report, include the operating system, Python version, requested route, HTTP status and the exact calculation involved. Describe whether validation was static, local HTTP testing or a real transfer measurement.
 
-Useful next work includes correcting units, making download fixtures configurable, hardening uploads and adding isolated tests for route behavior and calculations.
+Useful next work includes isolated route/calculation tests and repeatable measurements against a controlled server.
 
 ## License and credits
 
 Distributed under the [MIT license](LICENSE). External endpoints and speedtest-cli are separate services and dependencies with their own terms and availability.
-

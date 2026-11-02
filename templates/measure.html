@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
  <title>Speed test result</title>
@@ -14,8 +14,9 @@
  <p><b>Upload time:</b> {{ upload_datatime }} </p>
  <p><b>Upload speed:</b> {{ upload_speed }} Mbps</p>
  <hr>
- <p><b>Command:</b> {{ ping_Command }} ms</p>
- <p><b>Result:</b> {{ ping_result }} ms</p>
+ <p><b>System ping output</b></p>
+ <pre>{{ ping_Command }}</pre>
+ <pre>{{ ping_result or "" }}</pre>
  <hr>
  <p style="font-family: 'Arial', monospace; font-size: 20px; font-weight: bold; color: royalblue">Speed ​test result uses Speedtest component</p>
 <p><b>Download speed:</b> {{ download_speedtest }} Mbps</p>

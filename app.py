@@ -1,8 +1,10 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, send_file
+from pathlib import Path
 from views import views
 from subprocess import check_output
 import sys, io, threading, subprocess, re, platform, os, requests, time, speedtest, re
 app = Flask(__name__)
+app.config['MAX_CONTENT_LENGTH'] = 32 * 1024 * 1024
 app.register_blueprint(views, url_prefix = "/views")
 #----------------------------------------------------------------------------------------------------
 @app.route('/')
@@ -10,62 +12,41 @@ def index():
     return render_template('index.html')
 #----------------------------------------------------------------------------------------------------
 def speed_test(type="", size=0):
-    t_datasize =""
-    t_time = ""
-    t_speed = ""
+    start = time.perf_counter()
     if type == 'download':
-       size = f"{size}MB"
-       url = f"http://ipv4.download.thinkbroadband.com:8080/{size}.zip"
-       with io.BytesIO() as f:
-            start = time.perf_counter()
-            r = requests.get(url, stream=True)
-            total_length = r.headers.get('content-length')
-            dl = 0
-            if total_length is None:
-                f.write("")
-            else:
-                for chunk in r.iter_content(1024):
-                    dl += len(chunk)
-                    done = int(30 * dl / int(total_length))
-       t_datasize =   f"\n{size}"
-       t_time = f"\n{(time.perf_counter() - start):.2f} seconds"
-       t_speed = dl//(time.perf_counter() - start) / 100000
+        url = f"http://ipv4.download.thinkbroadband.com:8080/{size}MB.zip"
+        with requests.get(url, stream=True, timeout=(10, 60)) as response:
+            response.raise_for_status()
+            transferred = sum(len(chunk) for chunk in response.iter_content(64 * 1024))
     elif type == 'upload':
-        file_name = f"{size}MB.png"
-        nullFile = os.devnull
-        file_stats = os.stat(file_name)
-        with open(nullFile, "wb") as f:
-                start = time.perf_counter()
-                r = requests.post('https://httpbin.org/post', files={'file': open(file_name, 'rb')})
-                if r.ok:
-                   total_length = r.headers.get('content-length')
-                   dl = 0
-                   for chunk in r.iter_content(1024):
-                        dl += len(chunk)
-                        done = int(30 * dl / int(total_length))             
-                        t_datasize =f"\n{size}MB"
-                        t_time = f"\n{(time.perf_counter() - start):.2f} seconds"
-                        t_speed = dl//(time.perf_counter() - start) / 100000
-                else:
-                        t_datasize ="Please Upload again !"
-                        t_speed="Please Upload again ! "
-                        t_speed="0"
+        file_path = Path(app.root_path) / f"{size}MB.png"
+        transferred = file_path.stat().st_size
+        with file_path.open('rb') as payload:
+            response = requests.post(
+                'https://httpbin.org/post', files={'file': payload}, timeout=(10, 60)
+            )
+            response.raise_for_status()
+            response.close()
     else:
-        t_datasize ="unknown operation"
-        t_speed="unknown operation"
-        t_speed="0"
-        raise
-    return t_time,  t_speed, t_datasize 
+        raise ValueError("Unknown transfer type.")
+    elapsed = time.perf_counter() - start
+    if elapsed <= 0:
+        raise RuntimeError("The transfer duration could not be measured.")
+    return f"{elapsed:.2f} seconds", transferred * 8 / elapsed / 1_000_000, f"{transferred} bytes"
+
 #----------------------------------------------------------------------------------------------------
 def measure_ping_speed(host):
- try:
-     command = "-n 4" if platform.system().lower() == "windows" else "-c 4"
-     response = subprocess.Popen(f"ping {command} {host}", stdout=subprocess.PIPE,  universal_newlines=True, encoding="utf-8").communicate()[0]
-     response = response.split('\n')
-     return response[1] + "\n",response[2] + "\n"
- except subprocess.CalledProcessError:
-    pass
-    return None,None
+    count_flag = "-n" if platform.system().lower() == "windows" else "-c"
+    try:
+        response = subprocess.run(
+            ["ping", count_flag, "4", host],
+            capture_output=True, text=True, errors="replace", timeout=15, check=True,
+        )
+        lines = response.stdout.splitlines()
+        return "\n".join(lines[:2]), "\n".join(lines[2:])
+    except (OSError, subprocess.SubprocessError):
+        return None, None
+
 #****************************************************************************************************   
 @app.route('/measure', methods=['POST'])
 def measure():
@@ -115,21 +96,37 @@ def measure():
 #****************************************************************************************************   
 @app.route('/ping')
 def ping():
-    return 'Pong'
+    return 'Pong', 200, {'Cache-Control': 'no-store'}
 #****************************************************************************************************   
+
+#****************************************************************************************************
+
+@app.route('/download')
+def download():
+    response = send_file(
+        Path(app.root_path) / '20MB.png',
+        mimetype='application/octet-stream',
+        as_attachment=True,
+        download_name='20MB.png',
+        conditional=False,
+        etag=False,
+        max_age=0,
+    )
+    response.headers['Cache-Control'] = 'no-store'
+    return response
+
+
 @app.route('/upload', methods=['POST'])
 def upload():
-    if 'file' not in request.files:
-        return 'Dosya bulunamadı.'
+    file = request.files.get('file')
+    if file is None or not file.filename:
+        return jsonify(error='Select a file to upload.'), 400
+    received = 0
+    for chunk in iter(lambda: file.stream.read(64 * 1024), b''):
+        received += len(chunk)
+    return jsonify(bytes_received=received)
 
-    file = request.files['file']
 
-    if file.filename == '':
-        return 'Dosya adı boş.'
-
-    file.save('uploads/' + file.filename)
-    return 'Dosya başarıyla yüklendi: ' + file.filename
-#****************************************************************************************************   
 if __name__ == '__main__':
-    app.run(debug=True, port=8000)
+    app.run(host='127.0.0.1', port=8000, debug=False)
 #----------------------------------------------------------------------------------------------------

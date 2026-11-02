@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template
+from flask import Blueprint, render_template, redirect, url_for
 
 views =Blueprint(__name__,  "views")
 
@@ -8,5 +8,4 @@ def home ():
 
 @views.route("/measure")
 def result ():
-    return render_template("measure.html")
-
+    return redirect(url_for("index"))
