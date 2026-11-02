@@ -1,9 +1,9 @@
-This project explores internet speed by timing file transfers and connection requests.
+This app estimates file transfer speeds and connection delays from a web browser or its server.
 
-<h1 align="center">Network Speed Lab</h1>
+<h1 align="center">Network Speed Check</h1>
 
 <p align="center"><strong>Explore network measurements from both sides of the browser.</strong></p>
-<p align="center">A Python and Flask experiment combining browser request timing with server-side transfer and speedtest-cli measurements.</p>
+<p align="center">A Python and Flask application combining browser request timing with server-side transfer and speedtest-cli measurements.</p>
 
 <p align="center">
   <strong>English</strong> · <a href="README.tr.md">Türkçe</a><br />
@@ -16,7 +16,7 @@ This project explores internet speed by timing file transfers and connection req
 
 This project explores two approaches to connection testing. The browser page times HTTP requests, while a separate Flask route combines file transfers, speedtest-cli and a system ping command. Reading them together shows why the location of the measurement, the transferred byte count and the timing method matter.
 
-**This is an experimental prototype.** Transfer paths and arithmetic have received static fixes, but end-to-end behavior and measurement accuracy have not been verified. The interface is primarily English. Documentation is available in English and Turkish.
+**Measurement status.** Transfer paths and arithmetic have received static fixes, but end-to-end behavior and measurement accuracy have not been verified. The interface is primarily English. Documentation is available in English and Turkish.
 
 ## Run locally
 
@@ -30,8 +30,8 @@ This project explores two approaches to connection testing. The browser page tim
 Clone the source and create a fresh environment.
 
 ```text
-git clone https://github.com/ArdaHFO/network-speed-lab.git
-cd network-speed-lab
+git clone https://github.com/ArdaHFO/network-speed-check.git
+cd network-speed-check
 python -m venv .venv
 ```
 
@@ -47,7 +47,7 @@ Open [localhost:8000](http://127.0.0.1:8000). These commands start the UI withou
 ## Inside the project
 
 - **Browser download timing.** A button requests the bundled transfer fixture and calculates a rate from the received byte count.
-- **File upload experiment.** A file picker sends a multipart request, and the server confirms the received byte count without saving an application file.
+- **File upload timing.** A file picker sends a multipart request, and the server confirms the received byte count without saving an application file.
 - **HTTP round-trip timing.** The ping button measures the time taken by a request to `/ping`.
 - **Server-side comparison.** `POST /measure` combines a fixed-size download, an upload to an external echo service, speedtest-cli results and a system ping.
 - **Separate result view.** The server renders its measurements into a Jinja template with server-location details.

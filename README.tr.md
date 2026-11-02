@@ -1,9 +1,9 @@
-Bu proje, dosya aktarımı ve bağlantı isteklerinin sürelerini inceleyerek internet hızını ölçmeyi araştırır.
+Bu uygulama, web tarayıcısından veya sunucudan yapılan dosya aktarımlarının hızını ve bağlantı gecikmelerini tahmin eder.
 
-<h1 align="center">Network Speed Lab</h1>
+<h1 align="center">Network Speed Check</h1>
 
 <p align="center"><strong>Ağ ölçümlerini tarayıcının iki tarafından incele.</strong></p>
-<p align="center">Tarayıcı istek sürelerini, sunucu tarafındaki dosya aktarımını ve speedtest-cli ölçümlerini bir araya getiren Python ve Flask deneyi.</p>
+<p align="center">Tarayıcı istek sürelerini, sunucu tarafındaki dosya aktarımını ve speedtest-cli ölçümlerini bir araya getiren Python ve Flask uygulaması.</p>
 
 <p align="center">
   <a href="README.md">English</a> · <strong>Türkçe</strong><br />
@@ -16,7 +16,7 @@ Bu proje, dosya aktarımı ve bağlantı isteklerinin sürelerini inceleyerek in
 
 Bu proje bağlantı ölçümü için iki yaklaşımı inceler. Tarayıcı sayfası HTTP isteklerinin süresini ölçerken ayrı bir Flask rotası dosya aktarımını, speedtest-cli sonuçlarını ve sistem ping komutunu birleştirir. İki yaklaşım, ölçümün yapıldığı konumun, aktarılan bayt sayısının ve zamanlama yönteminin önemini gösterir.
 
-**Proje deneysel bir prototiptir.** Aktarım yollarına ve hesaplara statik düzeltmeler uygulandı. Uçtan uca davranış ve ölçüm doğruluğu henüz doğrulanmadı. Arayüz ağırlıklı olarak İngilizcedir. Belgeler İngilizce ve Türkçe sunulur.
+**Ölçümlerin durumu.** Aktarım yollarına ve hesaplara statik düzeltmeler uygulandı. Uçtan uca davranış ve ölçüm doğruluğu henüz doğrulanmadı. Arayüz ağırlıklı olarak İngilizcedir. Belgeler İngilizce ve Türkçe sunulur.
 
 ## Yerel olarak çalıştır
 
@@ -30,8 +30,8 @@ Bu proje bağlantı ölçümü için iki yaklaşımı inceler. Tarayıcı sayfas
 Kaynağı klonla ve yeni bir ortam oluştur.
 
 ```text
-git clone https://github.com/ArdaHFO/network-speed-lab.git
-cd network-speed-lab
+git clone https://github.com/ArdaHFO/network-speed-check.git
+cd network-speed-check
 python -m venv .venv
 ```
 
@@ -47,7 +47,7 @@ python -m flask --app app run --host 127.0.0.1 --port 8000
 ## Projede neler var?
 
 - **Tarayıcıda indirme süresi.** Bir düğme paketlenmiş aktarım dosyasını ister ve alınan bayt sayısından hız hesaplar.
-- **Dosya yükleme deneyi.** Dosya seçici multipart isteği gönderir. Sunucu uygulama dosyası kaydetmeden alınan bayt sayısını doğrular.
+- **Dosya yükleme süresi.** Dosya seçici multipart isteği gönderir. Sunucu uygulama dosyası kaydetmeden alınan bayt sayısını doğrular.
 - **HTTP gidiş-dönüş süresi.** Ping düğmesi `/ping` isteğinin süresini ölçer.
 - **Sunucu tarafında karşılaştırma.** `POST /measure`, sabit boyutlu indirme, harici yankı hizmetine yükleme, speedtest-cli sonuçları ve sistem ping komutunu birleştirir.
 - **Ayrı sonuç ekranı.** Sunucu ölçümleri ve sunucu konumu bilgileri Jinja şablonunda gösterilir.
