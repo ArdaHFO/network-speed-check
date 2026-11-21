@@ -1,33 +1,14 @@
-Bu uygulama, web tarayıcısından veya sunucudan yapılan dosya aktarımlarının hızını ve bağlantı gecikmelerini tahmin eder.
+Bu uygulama tarayıcıdaki dosya aktarımlarını ölçer ve sunucudan ayrı hız kontrolleri yapar.
 
-<h1 align="center">Network Speed Check</h1>
+# Network Speed Check
 
-<p align="center"><strong>Ağ ölçümlerini tarayıcının iki tarafından incele.</strong></p>
-<p align="center">Tarayıcı istek sürelerini, sunucu tarafındaki dosya aktarımını ve speedtest-cli ölçümlerini bir araya getiren Python ve Flask uygulaması.</p>
+[English](README.md) · [Türkçe](README.tr.md)
 
-<p align="center">
-  <a href="README.md">English</a> · <strong>Türkçe</strong><br />
-  <a href="#yerel-olarak-çalıştır"><strong>Yerel olarak çalıştır</strong></a> ·
-  <a href="#ölçüm-yolları">Ölçüm yolları</a> ·
-  <a href="#doğrulama-ve-mevcut-sınırlar">Mevcut sınırlar</a>
-</p>
+Ana sayfa, tarayıcı ile Flask arasındaki indirme, yükleme ve HTTP isteklerinin süresini ölçer. Ayrı bir `POST /measure` rotası harici dosya aktarımlarını, speedtest-cli ölçümlerini ve sistem ping sonucunu birleştirir.
 
----
+## Yerel kurulum
 
-Bu proje bağlantı ölçümü için iki yaklaşımı inceler. Tarayıcı sayfası HTTP isteklerinin süresini ölçerken ayrı bir Flask rotası dosya aktarımını, speedtest-cli sonuçlarını ve sistem ping komutunu birleştirir. İki yaklaşım, ölçümün yapıldığı konumun, aktarılan bayt sayısının ve zamanlama yönteminin önemini gösterir.
-
-**Ölçümlerin durumu.** Aktarım yollarına ve hesaplara statik düzeltmeler uygulandı. Uçtan uca davranış ve ölçüm doğruluğu henüz doğrulanmadı. Arayüz ağırlıklı olarak İngilizcedir. Belgeler İngilizce ve Türkçe sunulur.
-
-## Yerel olarak çalıştır
-
-| Gereksinim | Amaç |
-| --- | --- |
-| pip ve venv içeren Python 3 | Yalıtılmış geliştirme ortamı |
-| Flask 3.0.0 | Web rotaları ve şablonlar |
-| Requests 2.31.0 ve speedtest-cli 2.1.3 | Sunucunun içe aktardığı bağımlılıklar |
-| Güncel tarayıcı | JavaScript istek zamanlaması |
-
-Kaynağı klonla ve yeni bir ortam oluştur.
+pip ve venv içeren Python 3 ile bir web tarayıcısı gerekir.
 
 ```text
 git clone https://github.com/ArdaHFO/network-speed-check.git
@@ -35,68 +16,44 @@ cd network-speed-check
 python -m venv .venv
 ```
 
-Windows Komut İstemi'nde `.venv\Scripts\activate`, macOS/Linux'ta `source .venv/bin/activate` ile ortamı etkinleştir. Doğrudan çalışma zamanı bağımlılıklarını kur ve yerel önizlemeyi başlat.
+Windows Komut İstemi'nde `.venv\Scripts\activate`, macOS/Linux'ta `source .venv/bin/activate` ile ortamı etkinleştir.
 
 ```text
 python -m pip install Flask==3.0.0 requests==2.31.0 speedtest-cli==2.1.3
 python -m flask --app app run --host 127.0.0.1 --port 8000
 ```
 
-[localhost:8000](http://127.0.0.1:8000) adresini aç. Bu komutlar aktarım testi başlatmadan arayüzü sunar. Daha kapsamlı [requirements.txt](requirements.txt), geçmiş geliştirme ortamının kaydıdır. Repodaki `Scripts/` klasörü ortama özgü çalıştırılabilir dosyalar içerdiğinden yeni oluşturulan ortamı kullan.
+[localhost:8000](http://127.0.0.1:8000) adresini aç. Sunucunun açılması aktarım başlatmaz.
 
-## Projede neler var?
+[requirements.txt](requirements.txt), daha geniş bir eski bağımlılık listesi içerir. Repodaki `Scripts/` klasörü o Python ortamına aittir. Yukarıdaki yeni sanal ortamı kullan.
 
-- **Tarayıcıda indirme süresi.** Bir düğme paketlenmiş aktarım dosyasını ister ve alınan bayt sayısından hız hesaplar.
-- **Dosya yükleme süresi.** Dosya seçici multipart isteği gönderir. Sunucu uygulama dosyası kaydetmeden alınan bayt sayısını doğrular.
-- **HTTP gidiş-dönüş süresi.** Ping düğmesi `/ping` isteğinin süresini ölçer.
-- **Sunucu tarafında karşılaştırma.** `POST /measure`, sabit boyutlu indirme, harici yankı hizmetine yükleme, speedtest-cli sonuçları ve sistem ping komutunu birleştirir.
-- **Ayrı sonuç ekranı.** Sunucu ölçümleri ve sunucu konumu bilgileri Jinja şablonunda gösterilir.
+## Tarayıcı ölçümleri
 
-## Ölçüm yolları
+Sayfa, `GET /download` ile repodaki `20MB.png` dosyasını indirir, seçilen dosyayı `POST /upload` adresine gönderir ve `GET /ping` isteğinin süresini ölçer.
 
-| Yol | Davranış | Ölçüm konumu |
-| --- | --- | --- |
-| `GET /` | Tarayıcı arayüzünü gösterir | Tarayıcı |
-| `GET /ping` | `Pong` döndürür | Tarayıcıdan Flask'a HTTP isteği |
-| `GET /download` | Paketlenmiş `20MB.png` dosyasını önbelleksiz sunar | Flask'tan tarayıcıya |
-| `POST /upload` | Uygulama dosyası kaydetmeden alınan baytları sayar | Tarayıcıdan Flask'a |
-| `POST /measure` | Aktarım, speedtest-cli ve sistem ping işlemleri yapar | Flask'ı çalıştıran makine |
-| `GET /views/` | Aynı arayüze alternatif giriş | Tarayıcı |
+Sunucu, dosyanın bir kopyasını kaydetmeden alınan bayt sayısını doğrular. Yükleme istekleri multipart ek yükü dahil **32 MiB** ile sınırlıdır. İndirme ve ping yanıtları önbelleğe alınmaz.
 
-Uzak bir Flask kurulumu, yerel kurulumdan farklı ağ yolunu ölçer. Sunucu tarafındaki rota sunucunun bağlantısını ölçer ve ziyaretçinin internet bağlantısını doğrudan temsil etmez. Tarayıcıdaki “Ping”, ICMP ölçümü değil HTTP gidiş-dönüş süresidir.
+## Sunucu ölçümleri
 
-## Doğrulama ve mevcut sınırlar
+`POST /measure`, Flask'ın çalıştığı makinede şu işlemleri yapar:
 
-Kaynak statik olarak incelendi. Bu değişiklikler için uygulama, otomatik test, ağ ölçümü veya performans deneyi çalıştırılmadı.
+1. thinkbroadband'den 5 MB dosya indirmeyi ister.
+2. Repodaki `5MB.png` dosyasını httpbin'e yükler.
+3. speedtest-cli ile indirme ve yükleme ölçümleri yapar.
+4. İşletim sisteminin ping komutunu çalıştırır.
 
-- Tarayıcı zamanlaması artık başarılı HTTP yanıtlarını, gerçek bayt sayısını, geçen saniyeyi ve ondalık Mbps dönüşümünü kullanır. İndirme ve ping yanıtlarında önbellekleme kapatılır. Bu düzeltmeler tarayıcıda denenmedi.
-- Tarayıcı indirmesi paketlenmiş `20MB.png` dosyasını kullanır. Ölçülen yol tarayıcı ile bu Flask sunucusu arasındadır. Yerel önizleme internet sağlayıcısının bant genişliğini ölçmez.
-- Yükleme istekleri multipart ek yükü dahil 32 MiB ile sınırlıdır. İşleyici dosya baytlarını saymak için tüketir ve kalıcı bir uygulama dosyası kaydetmez.
-- Sunucu yükleme hızı, istek ve yanıt süresini birlikte içerir. HTTP işleme, ağ koşulları ve uzak hizmetler gözlenen değeri etkiler.
-- İsteğe bağlı sunucu ölçüm rotası hâlâ harici aktarım hizmetlerini ve speedtest-cli kullanır. Formunun gönderme düğmesi yorum satırındadır. Sağlayıcıların güncel erişilebilirliği iddia edilmez.
-- Sistem ping çıktısı işletim sistemine bağlı kalır. Komutlarda ve özel HTTP isteklerinde süre sınırları vardır, ancak harici hizmet akışının tamamı doğrulanmadı.
+Sonuçlar, speedtest-cli'nin seçtiği sunucu bilgileriyle birlikte `templates/measure.html` içinde gösterilir. Formun gönderme düğmesi şu anda yorum satırındadır; bu rota doğrudan POST isteği gerektirir. Harici ağ istekleri yapar ve adı geçen iki dosyanın toplamından daha fazla veri aktarabilir.
 
-Hızlar `bayt × 8 / saniye / 1.000.000` olarak hesaplanır. Anlamlı performans raporu için kontrollü dosyalar, tekrarlar ve ölçülen ağ yolunun açıkça belirtilmesi gerekir.
+## Sonuçları yorumlama
 
-## Proje yapısı
+Özel aktarım hesapları, ondalık Mbps değeri için `bayt × 8 / saniye / 1.000.000` formülünü kullanır. Süreye istek işleme de dahildir. httpbin yüklemesinde yanıt süresi de hesaba katılır.
 
-```text
-app.py                 Flask rotaları ve sunucu ölçümleri
-views.py               Ek sayfa rotaları
-templates/index.html   Tarayıcı kontrolleri ve JavaScript zamanlaması
-templates/measure.html Sunucu sonuç ekranı
-5MB.png, 10MB.png,
-20MB.png               Aktarım örnek dosyaları
-requirements.txt       Geçmiş bağımlılık kaydı
-Scripts/               Repoya eklenmiş eski Python ortamı
-```
+Tarayıcıdaki Ping düğmesi HTTP gidiş-dönüş süresini ölçer. Sunucu raporundaki sistem ping sonucu ayrı bir ölçümdür. Tarayıcı sonuçları tarayıcı ile Flask arasındaki bağlantıyı, sunucu sonuçları ise uygulamayı çalıştıran makinenin harici hizmetlere bağlantısını gösterir. Localhost aktarımları internet sağlayıcısının bant genişliğini ölçmez.
 
-## Geliştirme ve katkı
+Uçtan uca davranış ve ölçüm doğruluğu henüz doğrulanmadı. Harici hizmetler erişilemez olabilir; sistem ping çıktısı işletim sistemine göre değişir.
 
-Değişikliklerde tarayıcı ve sunucu ölçümlerini açıkça ayır. Hata bildirimine işletim sistemi, Python sürümü, istenen rota, HTTP durum kodu ve ilgili hesabı ekle. Doğrulamanın statik inceleme, yerel HTTP testi veya gerçek aktarım ölçümü olduğunu belirt.
+## Kod ve lisans
 
-Rota ve hesaplar için yalıtılmış testler ile kontrollü bir sunucuya karşı tekrarlanabilir ölçümler yararlı sonraki adımlardır.
+Rotalar ve sunucu ölçümleri [app.py](app.py), tarayıcı zamanlaması [templates/index.html](templates/index.html) içindedir. [views.py](views.py) alternatif sayfa rotalarını sağlar.
 
-## Lisans ve kaynaklar
-
-[MIT lisansı](LICENSE) ile dağıtılır. Harici uç noktalar ve speedtest-cli, kendi koşulları ve erişilebilirlikleri olan ayrı hizmetler ve bağımlılıklardır.
+[MIT lisansı](LICENSE). Bağımlılıklar ve harici hizmetler kendi lisanslarına ve koşullarına tabidir.
